@@ -6,10 +6,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
-import android.util.Base64;
 
 import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 
 import com.facebook.common.executors.UiThreadImmediateExecutorService;
 import com.facebook.common.internal.Files;
@@ -26,21 +24,14 @@ import com.facebook.imagepipeline.request.ImageRequestBuilder;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
-import com.tencent.mm.opensdk.diffdev.DiffDevOAuthFactory;
-import com.tencent.mm.opensdk.diffdev.IDiffDevOAuth;
-import com.tencent.mm.opensdk.diffdev.OAuthErrCode;
-import com.tencent.mm.opensdk.diffdev.OAuthListener;
 import com.tencent.mm.opensdk.modelbase.BaseReq;
 import com.tencent.mm.opensdk.modelbase.BaseResp;
 import com.tencent.mm.opensdk.modelbiz.ChooseCardFromWXCardPackage;
-import com.tencent.mm.opensdk.modelbiz.WXOpenCustomerServiceChat;
 import com.tencent.mm.opensdk.modelmsg.SendAuth;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.modelmsg.ShowMessageFromWX;
@@ -60,6 +51,9 @@ import com.tencent.mm.opensdk.openapi.IWXAPIEventHandler;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 import com.tencent.mm.opensdk.constants.ConstantsAPI;
 import com.tencent.mm.opensdk.modelbiz.SubscribeMessage;
+import com.tencent.mm.opensdk.openapi.IDiffDevOAuth;
+import com.tencent.mm.opensdk.openapi.IDiffDevOAuth.OAuthListener;
+import com.tencent.mm.opensdk.diffdev.DiffDevOAuthFactory;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -76,10 +70,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAPIEventHandler {
+public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAPIEventHandler, OAuthListener {
     private String appId;
 
     private IWXAPI api = null;
+    private IDiffDevOAuth diffDevOAuth = null;
     private final static String NOT_REGISTERED = "registerApp required.";
     private final static String INVOKE_FAILED = "WeChat API invoke returns false.";
     private final static String INVALID_ARGUMENT = "invalid argument.";
@@ -120,7 +115,7 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
 
     @Override
     public String getName() {
-        return "WeChat";
+        return "RCTWeChat";
     }
 
     /**
@@ -156,46 +151,11 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
         }
     }
 
-  private void sendEvent(ReactContext reactContext, String eventName, WritableMap params) {
-    reactContext.getJSModule(RCTNativeAppEventEmitter.class).emit(eventName, params);
-  }
-
-  @ReactMethod
-  public void authByScan(String appid, String nonceStr, String timeStamp, String scope, String signature, String schemeData, final Callback callback) {
-    if (api == null) {
-      callback.invoke(NOT_REGISTERED);
-      return;
-    }
-
-    IDiffDevOAuth oauth = DiffDevOAuthFactory.getDiffDevOAuth();
-    oauth.stopAuth();
-    oauth.auth(appid, scope, nonceStr, timeStamp, signature, new OAuthListener() {
-      @Override
-      public void onAuthGotQrcode(String var1, byte[] var2){
-        WritableMap map = Arguments.createMap();
-        String base64String = Base64.encodeToString(var2, Base64.DEFAULT);
-        map.putString("qrcode", base64String);
-        sendEvent(getReactApplicationContext(), "onAuthGotQrcode", map);
-      }
-
-      @Override
-      public void onQrcodeScanned() {
-
-      }
-      @Override
-      public void onAuthFinish(OAuthErrCode var1, String var2){
-        WritableMap map = Arguments.createMap();
-        map.putString("authCode", var2);
-        map.putInt("errCode", var1.getCode());
-        callback.invoke(null, map);
-      }
-    });
-  }
-
     @ReactMethod
     public void registerApp(String appid, String universalLink, Callback callback) {
         this.appId = appid;
         api = WXAPIFactory.createWXAPI(this.getReactApplicationContext().getBaseContext(), appid, true);
+        diffDevOAuth = DiffDevOAuthFactory.getDiffDevOAuth();
         callback.invoke(null, api.registerApp(appid));
     }
 
@@ -245,6 +205,49 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
         req.scope = scope;
         req.state = state;
         callback.invoke(null, api.sendReq(req));
+    }
+
+    /**
+     * 扫码登录 - 获取二维码
+     *
+     * @param appId 应用唯一标识
+     * @param scope 应用授权作用域
+     * @param nonceStr 随机字符串
+     * @param timeStamp 时间戳
+     * @param signature 签名
+     * @param callback 回调
+     */
+    @ReactMethod
+    public void authByQrCode(String appId, String scope, String nonceStr, String timeStamp, String signature, Callback callback) {
+        if (diffDevOAuth == null) {
+            callback.invoke(NOT_REGISTERED);
+            return;
+        }
+        try {
+            diffDevOAuth.auth(appId, scope, nonceStr, timeStamp, signature, this);
+            callback.invoke(null, true);
+        } catch (Exception e) {
+            callback.invoke(e.getMessage());
+        }
+    }
+
+    /**
+     * 停止扫码登录
+     *
+     * @param callback 回调
+     */
+    @ReactMethod
+    public void stopAuth(Callback callback) {
+        if (diffDevOAuth == null) {
+            callback.invoke(NOT_REGISTERED);
+            return;
+        }
+        try {
+            diffDevOAuth.stopOAuth();
+            callback.invoke(null, true);
+        } catch (Exception e) {
+            callback.invoke(e.getMessage());
+        }
     }
 
     /**
@@ -299,21 +302,6 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
         return data;
     }
 
-    public String getFileUri(Context context, File file) {
-        if (file == null || !file.exists()) {
-            return null;
-        }
-
-        Uri contentUri = FileProvider.getUriForFile(context,
-            context.getPackageName() + ".fileprovider",  // 要与`AndroidManifest.xml`里配置的`authorities`一致
-            file);
-
-        // 授权给微信访问路径
-        context.grantUriPermission("com.tencent.mm",  // 这里填微信包名
-            contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        return contentUri.toString();   // contentUri.toString() 即是以"content://"开头的用于共享的路径
-    }
 
     /**
      * 分享文本
@@ -324,15 +312,7 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
     @ReactMethod
     public void shareFile(ReadableMap data, Callback callback) throws Exception {
         WXFileObject fileObj = new WXFileObject();
-
-        String url = data.getString("url");
-        if (url.startsWith("http")) {
-            fileObj.fileData = loadRawDataFromURL(url);
-        } else {
-            File file = new File(url);
-            String fileUri = getFileUri(getReactApplicationContext(), file);
-            fileObj.filePath = fileUri;
-        }
+        fileObj.fileData = loadRawDataFromURL(data.getString("url"));
 
         WXMediaMessage msg = new WXMediaMessage();
         msg.mediaObject = fileObj;
@@ -740,20 +720,6 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
         callback.invoke(api.sendReq(payReq) ? null : INVOKE_FAILED);
     }
 
-    @ReactMethod
-    public void openCustomerServiceChat(String corpId, String kfUrl, Callback callback) {
-        if (api == null) {
-            callback.invoke(NOT_REGISTERED);
-            return;
-        }
-        // open customer service logic
-        WXOpenCustomerServiceChat.Req req = new WXOpenCustomerServiceChat.Req();
-
-        req.corpId = corpId;
-        req.url = kfUrl;
-        callback.invoke(null, api.sendReq(req));
-    }
-
     private void _share(final int scene, final ReadableMap data, final Callback callback) {
         Uri uri = null;
         if (data.hasKey("thumbImage")) {
@@ -1072,6 +1038,40 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
             map.putString("cardItemList", resp.cardItemList);
         }
 
+        this.getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("WeChat_Resp", map);
+    }
+
+    @Override
+    public void onAuthGotQrcode(String qrcodeImgPath, byte[] imgBuf) {
+        // imgBuf 是二维码图片的二进制数据
+        String base64Image = android.util.Base64.encodeToString(imgBuf, android.util.Base64.DEFAULT);
+        WritableMap map = Arguments.createMap();
+        map.putString("type", "WechatAuth.Qrcode");
+        map.putString("qrcodeBase64", base64Image);
+        this.getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("WeChat_Resp", map);
+    }
+
+    @Override
+    public void onQrcodeScanned() {
+        WritableMap map = Arguments.createMap();
+        map.putString("type", "WechatAuth.Scanned");
+        this.getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("WeChat_Resp", map);
+    }
+
+    @Override
+    public void onAuthFinish(IDiffDevOAuth.OAuthErrCode errCode, String authCode) {
+        WritableMap map = Arguments.createMap();
+        map.putString("type", "WechatAuth.Finish");
+        map.putInt("errCode", errCode.ordinal());
+        if (errCode == IDiffDevOAuth.OAuthErrCode.WechatAuth_Err_Ok && authCode != null) {
+            map.putString("authCode", authCode);
+        }
         this.getReactApplicationContext()
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("WeChat_Resp", map);
