@@ -588,7 +588,9 @@ RCT_EXPORT_METHOD(authByQrCode:(NSString *)appId
                           scope:scope
                       signature:signature
                      schemeData:schemeData ?: @""];
-    callback(@[success ? [NSNull null] : INVOKE_FAILED]);
+    if (callback) {
+        callback(@[success ? [NSNull null] : INVOKE_FAILED]);
+    }
 }
 
 // 停止扫码登录
