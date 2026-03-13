@@ -1,8 +1,18 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+#import <React/RCTBridge.h>
 #import <React/RCTBridgeModule.h>
+#if __has_include(<WechatOpenSDK/WXApi.h>)
+#import <WechatOpenSDK/WXApi.h>
+#else
 #import "WXApi.h"
+#endif
+#if __has_include(<WechatOpenSDK/WechatAuthSDK.h>)
+#import <WechatOpenSDK/WechatAuthSDK.h>
+#else
+#import "WechatAuthSDK.h"
+#endif
 
 // define share type constants
 #define RCTWXShareTypeNews @"news"
@@ -26,6 +36,7 @@
 
 @interface WechatLib : NSObject <RCTBridgeModule, WXApiDelegate, WechatAuthAPIDelegate>
 
+@property (nonatomic, weak) RCTBridge *bridge;
 @property NSString* appId;
 
 @end

@@ -1,7 +1,15 @@
 //  Created by little-snow-fox on 2019-10-9.
 #import "WechatLib.h"
+#if __has_include(<WechatOpenSDK/WXApiObject.h>)
+#import <WechatOpenSDK/WXApiObject.h>
+#else
 #import "WXApiObject.h"
+#endif
+#if __has_include(<WechatOpenSDK/WechatAuthSDK.h>)
+#import <WechatOpenSDK/WechatAuthSDK.h>
+#else
 #import "WechatAuthSDK.h"
+#endif
 #import <React/RCTEventDispatcher.h>
 #import <React/RCTBridge.h>
 #import <React/RCTLog.h>
@@ -721,4 +729,3 @@ RCT_EXPORT_METHOD(stopAuth:(RCTResponseSenderBlock)callback)
 }
 
 @end
-
