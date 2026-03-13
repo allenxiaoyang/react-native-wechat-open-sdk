@@ -1,6 +1,6 @@
 {
   "name": "@allenxiaoyang/react-native-wechat-open-sdk",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "React-Native(iOS/Android) functionalities include WeChat Login, Share, Favorite and Payment.",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
