@@ -51,8 +51,8 @@ import com.tencent.mm.opensdk.openapi.IWXAPIEventHandler;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 import com.tencent.mm.opensdk.constants.ConstantsAPI;
 import com.tencent.mm.opensdk.modelbiz.SubscribeMessage;
-import com.tencent.mm.opensdk.openapi.IDiffDevOAuth;
-import com.tencent.mm.opensdk.openapi.IDiffDevOAuth.OAuthListener;
+import com.tencent.mm.opensdk.diffdev.IDiffDevOAuth;
+import com.tencent.mm.opensdk.diffdev.IDiffDevOAuth.OAuthListener;
 import com.tencent.mm.opensdk.diffdev.DiffDevOAuthFactory;
 
 import java.io.BufferedInputStream;
