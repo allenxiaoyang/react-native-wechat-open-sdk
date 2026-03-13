@@ -2,26 +2,25 @@
 
 # React-Native-Wechat-Open-SDK
 ![Version](https://img.shields.io/badge/Version-V3.0.4-brightgreen)
-![npm version](https://img.shields.io/badge/npm-v1.1.24-blue)
-![Wechat SDK](https://img.shields.io/badge/WechatSDKAndroid-V6.8.20-brightgreen)
-![Wechat SDK](https://img.shields.io/badge/WechatSDKIos-V2.0-brightgreen)
+![npm version](https://img.shields.io/badge/npm-v3.0.4-blue)
+![Wechat SDK](https://img.shields.io/badge/WechatSDKAndroid-V6.8.34-brightgreen)
+![Wechat SDK](https://img.shields.io/badge/WechatSDKIos-V2.0.5-brightgreen)
 ![react version](https://img.shields.io/badge/react-v70-blue)
 
-本库为 react-native 项目提供 Wechat SDK 支持
+本库为 react-native 项目提供 WeChat SDK 支持
 
 [React Native] bridging library that integrates WeChat SDKs:
 
-- Android SDK 6.8.20
-- iOS SDK 2.0
+- Android SDK 6.8.34
+- iOS SDK 2.0.5
 
 <br>
 
 ## 路线图
 - 3.0.x
   - [X] React native 70
-  - [X] Android SDK 6.8.20
-  - [X] iOS SDK 2.0
-  - [ ] iOS SDK 2.0 No payment function
+  - [X] Android SDK 6.8.34
+  - [X] iOS SDK 2.0.5
   - [X] Example
 - 1.1.x
   - [X] React native 60
@@ -32,13 +31,7 @@
 <br>
 
 ## 注意
-如果你的 IOS 应用需要使用**不带支付功能**的 WeChat SDK，请使用带有 “-notpay” 后缀的 NPM 包。
-
-目前最新代码版本为 3.0.x，但 NPM Last 版本暂时只到 1.1.26，因为 **3.0.x 暂时还处于开发阶段**，有小部分功能**未经过测试**。
-
-如果你需要使用 3.0.x 版本，请在 package.json 中加上版本号 **react-native-wechat-open-sdk@3.0.4**，切换前请你清楚了解该版本的风险，该版本为开发版。
-
-我会尽快推出 3.0.x 发行版。
+如果你的 IOS 应用需要使用**不带支付功能**的 WeChat SDK，请使用带有 "-notpay" 后缀的 NPM 包。
 
 <br>
 
@@ -54,7 +47,7 @@
 
 - [安装](#安装)
 - [起步](#起步)
-- [API 文档](#API文档)
+- [API 文档](#API 文档)
 
 <br>
 
@@ -62,11 +55,6 @@
 NPM 安装
 ```sh
 npm install react-native-wechat-open-sdk --save
-# 3.0.x 使用3.0.4
-npm install react-native-wechat-open-sdk@3.0.4 --save
-
-# 3.0.0 开始弃用
-react-native link react-native-wechat-open-sdk
 ```
 源码安装
 ```sh
@@ -181,11 +169,11 @@ following fields:
 const ret = await WeChat.authByScan(WeiXinId, WeiXinSecret, (qrcode) => {
   console.log(qrcode)
   // 拿到 qrcode 用 Image 去渲染
-});  
+});
 console.log('登录信息', ret);
 ```
 
-如有不懂，可以查看[微信官方文档](https://developers.weixin.qq.com/doc/oplatform/Mobile_App/WeChat_Login/Login_via_Scan.html)
+如有不懂，可以查看 [微信官方文档](https://developers.weixin.qq.com/doc/oplatform/Mobile_App/WeChat_Login/Login_via_Scan.html)
 
 #### ShareText(ShareTextMetadata) 分享文本
 
@@ -194,7 +182,7 @@ ShareTextMetadata
 | name  | type   | description                    |
 | ----- | ------ | ------------------------------ |
 | text  | String | 分享文本                       |
-| scene | Number | 分享到, 0:会话 1:朋友圈 2:收藏 |
+| scene | Number | 分享到，0:会话 1:朋友圈 2:收藏 |
 
 Return:
 
@@ -219,7 +207,7 @@ ShareImageMetadata
 | name     | type   | description                    |
 | -------- | ------ | ------------------------------ |
 | imageUrl | String | 图片地址                       |
-| scene    | Number | 分享到, 0:会话 1:朋友圈 2:收藏 |
+| scene    | Number | 分享到，0:会话 1:朋友圈 2:收藏 |
 
 Return:
 
@@ -244,7 +232,7 @@ ShareImageMetadata
 | name     | type   | description                    |
 | -------- | ------ | ------------------------------ |
 | imageUrl | String | 图片地址                       |
-| scene    | Number | 分享到, 0:会话 1:朋友圈 2:收藏 |
+| scene    | Number | 分享到，0:会话 1:朋友圈 2:收藏 |
 
 Return:
 
@@ -261,7 +249,7 @@ ShareFileMetadata
 | ----- | ------ | -------------- |
 | url   | String | 文件地址。如果是远程文件，则为 http 开头；如果是本地文件，则为绝对路径，如 /storage/emulated/0/Android/xxx |
 | title | String | 文件标题       |
-| scene | Number | 分享到, 0:会话 |
+| scene | Number | 分享到，0:会话 |
 
 Return:
 
@@ -277,7 +265,7 @@ Return:
 import * as WeChat from 'react-native-wechat-open-sdk';
 
 WeChat.shareFile({
-  imageUrl: 'https://sdcard/test.png',
+  url: '/sdcard/test.png',
   title: '测试文件.pdf',
   scene: 0,
 });
@@ -296,7 +284,7 @@ ShareMusicMetadata
 | musicLowBandUrl     | String | 供低带宽环境下使用的音频网页 URL 地址 |
 | musicDataUrl        | String | 音频数据的 URL 地址                   |
 | musicLowBandDataUrl | String | 供低带宽环境下使用的音频数据 URL 地址 |
-| scene               | Number | 分享到, 0:会话 1:朋友圈 2:收藏        |
+| scene               | Number | 分享到，0:会话 1:朋友圈 2:收藏        |
 
 Return:
 
@@ -327,7 +315,7 @@ ShareVideoMetadata
 | thumbImageUrl   | String | 缩略图地址，本库会自动压缩到 32KB |
 | videoUrl        | String | 视频链接                          |
 | videoLowBandUrl | String | 供低带宽的环境下使用的视频链接    |
-| scene           | Number | 分享到, 0:会话 1:朋友圈 2:收藏    |
+| scene           | Number | 分享到，0:会话 1:朋友圈 2:收藏    |
 
 Return:
 
@@ -357,7 +345,7 @@ ShareWebpageMetadata
 | description   | String | 描述                              |
 | thumbImageUrl | String | 缩略图地址，本库会自动压缩到 32KB |
 | webpageUrl    | String | HTML 链接                         |
-| scene         | Number | 分享到, 0:会话 1:朋友圈 2:收藏    |
+| scene         | Number | 分享到，0:会话 1:朋友圈 2:收藏    |
 
 Return:
 
@@ -371,7 +359,7 @@ import * as WeChat from 'react-native-wechat-open-sdk';
 
 WeChat.shareWebpage({
   title: 'Interesting web.',
-  videoUrl: 'https://google.com/music.mp3',
+  webpageUrl: 'https://google.com/article.html',
   thumbImageUrl: 'https://google.com/1.jpg',
   scene: 0,
 });
@@ -392,7 +380,7 @@ ShareMiniProgram
 | withShareTicket | String | 是否使用带 shareTicket 的分享                                                      |
 | miniProgramType | Number | 小程序的类型，默认正式版，1.8.1 及以上版本开发者工具包支持分享开发版和体验版小程序 |
 | webpageUrl      | String | 兼容低版本的网页链接                                                               |
-| scene           | Number | 分享到, 0:会话 1:朋友圈 2:收藏                                                     |
+| scene           | Number | 分享到，0:会话 1:朋友圈 2:收藏                                                     |
 
 Return:
 
@@ -469,7 +457,7 @@ Return:
 ```js
 import * as WeChat from 'react-native-wechat-open-sdk';
 
-// ios 什么都不填都可以，android可以填写以下假的内容都可以正常运行，具体参数获取可以去看微信文档
+// ios 什么都不填都可以，android 可以填写以下假的内容都可以正常运行，具体参数获取可以去看微信文档
 WeChat.chooseInvoice({
   cardSign: 'cardSign',
   signType: 'SHA256',
@@ -514,13 +502,13 @@ Sends request for proceeding payment, then returns an object:
     WeChat.registerApp(Global.APP_ID, Global.UNIVERSAL_LINK);
     DeviceEventEmitter.addListener('WeChat_Req', req => {
       console.log('req:', req)
-      if (req.type === 'LaunchFromWX.Req') { // 从小程序回到APP的事件
+      if (req.type === 'LaunchFromWX.Req') { // 从小程序回到 APP 的事件
         miniProgramCallback(req.extMsg)
       }
     });
     DeviceEventEmitter.addListener('WeChat_Resp', resp => {
       console.log('res:', resp)
-      if (resp.type === 'WXLaunchMiniProgramReq.Resp') { // 从小程序回到APP的事件
+      if (resp.type === 'WXLaunchMiniProgramReq.Resp') { // 从小程序回到 APP 的事件
         miniProgramCallback(resp.extMsg)
       } else if (resp.type === 'SendMessageToWX.Resp') { // 发送微信消息后的事件
         sendMessageCallback(resp.country)
@@ -536,13 +524,13 @@ Sends request for proceeding payment, then returns an object:
 
 MIT
 
-Author: [allenxiaoyang](https://github.com/allenxiaoyang/react-native-wechat-open-sdk)
+Author: [little-snow-fox](https://github.com/little-snow-fox), [allenxiaoyang](https://github.com/allenxiaoyang)
 
 <br>
 
 ## Sponsor
-如果觉得本库还行，你愿意的话可以请我喝咖啡 ^_^ 。
+如果觉得本库还行，你愿意的话可以请原作者喝咖啡 ^_^ 。
 
+### 原作者收款码（little-snow-fox）
 <img src="./image/wepay.jpg" alt="wepay" width="380" />
 <img src="./image/alipay.jpg" alt="alipay" width="380" />
-
