@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -72,6 +73,8 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAPIEventHandler, OAuthListener {
+    private static final String TAG = "WeChatLibModule";
+    private static final String DEBUG_EVENT = "WeChat_Debug";
     private String appId;
 
     private IWXAPI api = null;
@@ -221,13 +224,31 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
     @ReactMethod
     public void authByQrCode(String appId, String scope, String nonceStr, String timeStamp, String signature, Callback callback) {
         if (diffDevOAuth == null) {
+            Log.e(TAG, "authByQrCode failed: diffDevOAuth is null");
+            sendDebugEvent("Android.authByQrCode.error", Arguments.createMap());
             callback.invoke(NOT_REGISTERED);
             return;
         }
         try {
+            Log.d(TAG, "authByQrCode request appId=" + appId
+                    + " scope=" + scope
+                    + " nonceStr=" + nonceStr
+                    + " timeStamp=" + timeStamp
+                    + " signature=" + signature);
+            WritableMap debugMap = Arguments.createMap();
+            debugMap.putString("appId", appId);
+            debugMap.putString("scope", scope);
+            debugMap.putString("nonceStr", nonceStr);
+            debugMap.putString("timeStamp", timeStamp);
+            debugMap.putString("signature", signature);
+            sendDebugEvent("Android.authByQrCode.request", debugMap);
             diffDevOAuth.auth(appId, scope, nonceStr, timeStamp, signature, this);
             callback.invoke(null, true);
         } catch (Exception e) {
+            Log.e(TAG, "authByQrCode exception", e);
+            WritableMap debugMap = Arguments.createMap();
+            debugMap.putString("message", e.getMessage());
+            sendDebugEvent("Android.authByQrCode.exception", debugMap);
             callback.invoke(e.getMessage());
         }
     }
@@ -1046,6 +1067,11 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
 
     @Override
     public void onAuthGotQrcode(String qrcodeImgPath, byte[] imgBuf) {
+        Log.d(TAG, "onAuthGotQrcode qrcodeImgPath=" + qrcodeImgPath + " hasImgBuf=" + (imgBuf != null));
+        WritableMap debugMap = Arguments.createMap();
+        debugMap.putString("qrcodeImgPath", qrcodeImgPath);
+        debugMap.putBoolean("hasImgBuf", imgBuf != null);
+        sendDebugEvent("Android.onAuthGotQrcode", debugMap);
         // imgBuf 是二维码图片的二进制数据
         String base64Image = android.util.Base64.encodeToString(imgBuf, android.util.Base64.DEFAULT);
         WritableMap map = Arguments.createMap();
@@ -1058,6 +1084,8 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
 
     @Override
     public void onQrcodeScanned() {
+        Log.d(TAG, "onQrcodeScanned");
+        sendDebugEvent("Android.onQrcodeScanned", null);
         WritableMap map = Arguments.createMap();
         map.putString("type", "WechatAuth.Scanned");
         this.getReactApplicationContext()
@@ -1067,6 +1095,12 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
 
     @Override
     public void onAuthFinish(OAuthErrCode errCode, String authCode) {
+        Log.d(TAG, "onAuthFinish errCode=" + errCode + " ordinal=" + errCode.ordinal() + " authCode=" + authCode);
+        WritableMap debugMap = Arguments.createMap();
+        debugMap.putString("errCodeName", errCode.name());
+        debugMap.putInt("errCodeOrdinal", errCode.ordinal());
+        debugMap.putString("authCode", authCode == null ? "" : authCode);
+        sendDebugEvent("Android.onAuthFinish", debugMap);
         WritableMap map = Arguments.createMap();
         map.putString("type", "WechatAuth.Finish");
         map.putInt("errCode", errCode.ordinal());
@@ -1076,6 +1110,14 @@ public class WeChatLibModule extends ReactContextBaseJavaModule implements IWXAP
         this.getReactApplicationContext()
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("WeChat_Resp", map);
+    }
+
+    private void sendDebugEvent(String stage, @Nullable WritableMap map) {
+        WritableMap payload = map == null ? Arguments.createMap() : map;
+        payload.putString("stage", stage);
+        this.getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(DEBUG_EVENT, payload);
     }
 
     private interface ImageCallback {

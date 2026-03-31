@@ -22,10 +22,23 @@
 // Define error messages
 #define NOT_REGISTERED (@"registerApp required.")
 #define INVOKE_FAILED (@"WeChat API invoke returns false.")
+#define RCTWXDebugEventName @"WeChat_Debug"
 
 @synthesize bridge = _bridge;
 
 RCT_EXPORT_MODULE()
+
+- (void)sendDebugEvent:(NSString *)stage payload:(NSDictionary *)payload
+{
+    if (!self.bridge) {
+        return;
+    }
+    NSMutableDictionary *body = [@{@"stage": stage ?: @"unknown"} mutableCopy];
+    if (payload) {
+        [body addEntriesFromDictionary:payload];
+    }
+    [self.bridge.eventDispatcher sendDeviceEventWithName:RCTWXDebugEventName body:body];
+}
 
 - (instancetype)init
 {
@@ -590,12 +603,26 @@ RCT_EXPORT_METHOD(authByQrCode:(NSString *)appId
                   :(NSString *)schemeData
                   :(RCTResponseSenderBlock)callback)
 {
+    NSLog(@"[WechatLib] authByQrCode request appId=%@ scope=%@ nonceStr=%@ timeStamp=%@ signature=%@ schemeData=%@",
+          appId, scope, nonceStr, timeStamp, signature, schemeData ?: @"");
+    [self sendDebugEvent:@"iOS.authByQrCode.request" payload:@{
+        @"appId": appId ?: @"",
+        @"scope": scope ?: @"",
+        @"nonceStr": nonceStr ?: @"",
+        @"timeStamp": timeStamp ?: @"",
+        @"signature": signature ?: @"",
+        @"schemeData": schemeData ?: @""
+    }];
     BOOL success = [_authSDK Auth:appId
                        nonceStr:nonceStr
                       timeStamp:timeStamp
                           scope:scope
                       signature:signature
                      schemeData:schemeData ?: @""];
+    NSLog(@"[WechatLib] authByQrCode invoke result success=%@", success ? @"YES" : @"NO");
+    [self sendDebugEvent:@"iOS.authByQrCode.invoke" payload:@{
+        @"success": @(success)
+    }];
     if (callback) {
         callback(@[success ? [NSNull null] : INVOKE_FAILED]);
     }
@@ -705,6 +732,10 @@ RCT_EXPORT_METHOD(stopAuth:(RCTResponseSenderBlock)callback)
 
 // 得到二维码图片
 - (void)onAuthGotQrcode:(UIImage *)image {
+    NSLog(@"[WechatLib] onAuthGotQrcode image=%@", image);
+    [self sendDebugEvent:@"iOS.onAuthGotQrcode" payload:@{
+        @"hasImage": @(image != nil)
+    }];
     NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
     NSString *base64Image = [imageData base64EncodedStringWithOptions:0];
     NSMutableDictionary *body = [@{@"type": @"WechatAuth.Qrcode"} mutableCopy];
@@ -714,12 +745,19 @@ RCT_EXPORT_METHOD(stopAuth:(RCTResponseSenderBlock)callback)
 
 // 二维码被扫描
 - (void)onQrcodeScanned {
+    NSLog(@"[WechatLib] onQrcodeScanned");
+    [self sendDebugEvent:@"iOS.onQrcodeScanned" payload:nil];
     NSMutableDictionary *body = [@{@"type": @"WechatAuth.Scanned"} mutableCopy];
     [self.bridge.eventDispatcher sendDeviceEventWithName:RCTWXEventName body:body];
 }
 
 // 授权完成
 - (void)onAuthFinish:(int)errCode AuthCode:(NSString *)authCode {
+    NSLog(@"[WechatLib] onAuthFinish errCode=%d authCode=%@", errCode, authCode ?: @"");
+    [self sendDebugEvent:@"iOS.onAuthFinish" payload:@{
+        @"errCode": @(errCode),
+        @"authCode": authCode ?: @""
+    }];
     NSMutableDictionary *body = [@{@"type": @"WechatAuth.Finish"} mutableCopy];
     body[@"errCode"] = @(errCode);
     if (errCode == WechatAuth_Err_Ok && authCode) {
