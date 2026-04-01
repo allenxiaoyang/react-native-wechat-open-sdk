@@ -1,8 +1,8 @@
 <img height="200" src="./image/weixin.png?raw=true">
 
 # React-Native-Wechat-Open-SDK
-![Version](https://img.shields.io/badge/Version-V3.0.4-brightgreen)
-![npm version](https://img.shields.io/badge/npm-v3.0.4-blue)
+![Version](https://img.shields.io/badge/Version-V3.0.5-brightgreen)
+![npm version](https://img.shields.io/badge/npm-v3.0.5-blue)
 ![Wechat SDK](https://img.shields.io/badge/WechatSDKAndroid-V6.8.34-brightgreen)
 ![Wechat SDK](https://img.shields.io/badge/WechatSDKIos-V2.0.5-brightgreen)
 ![react version](https://img.shields.io/badge/react-v70-blue)
@@ -54,7 +54,7 @@
 ## 安装
 NPM 安装
 ```sh
-npm install react-native-wechat-open-sdk --save
+npm install @allenxiaoyang/react-native-wechat-open-sdk --save
 ```
 源码安装
 ```sh
@@ -62,7 +62,7 @@ git clone https://github.com/allenxiaoyang/react-native-wechat-open-sdk
 cd react-native-wechat-open-sdk
 npm link
 cd ../my-project
-npm link react-native-wechat-open-sdk
+npm link @allenxiaoyang/react-native-wechat-open-sdk
 ```
 源码安装指定版本
 ```sh
@@ -71,7 +71,7 @@ cd react-native-wechat-open-sdk
 git checkout 1.1.x
 npm link
 cd ../my-project
-npm link react-native-wechat-open-sdk
+npm link @allenxiaoyang/react-native-wechat-open-sdk
 ```
 <br>
 
